@@ -31,6 +31,12 @@ proxyServer = (req, res, proxy) ->
     [ignore, hostname, path] = req.url.match(/\/([^\/]+)(.*)/)
     [host, port] = hostname.split(/:/)
 
+    unless host
+      console.log "no hostname specified"
+      res.writeHead(400, {})
+      res.end("Bad request. (no hostname specified)");
+      return
+
     console.log "proxying to #{hostname}#{path}"
 
 
