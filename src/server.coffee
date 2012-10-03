@@ -5,12 +5,7 @@ httpProxy = require('http-proxy');
 proxyServer = (req, res, proxy) ->
 
 
-  unless req.headers.origin
-    console.log 'req.headers.origin not given'
-    res.write('hello https\n');
-    res.end();
-    return
-
+  req.headers.origin or= "*"
 
   if req.headers['access-control-request-headers']
     headers = req.headers['access-control-request-headers']
