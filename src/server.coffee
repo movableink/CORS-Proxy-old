@@ -28,8 +28,8 @@ proxyServer = (req, res, proxy) ->
     return
 
   else
-    [ignore, hostname, path] = req.url.match(/\/([^\/]+)(.*)/)
-    [host, port] = hostname.split(/:/)
+    [ignore, hostname, path] = (req.url.match(/\/([^\/]+)(.*)/) || [])
+    [host, port] = (hostname || "").split(/:/)
 
     unless host
       console.log "no hostname specified"
