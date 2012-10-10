@@ -42,7 +42,7 @@ proxyServer = (req, res, proxy) ->
 
     res.setHeader(key, value) for key, value of cors_headers
 
-    # req.headers.host = hostname
+    req.headers.host = hostname
     req.url          = path
 
 
