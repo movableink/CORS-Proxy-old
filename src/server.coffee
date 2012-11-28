@@ -1,9 +1,7 @@
-http = require('http');
-httpProxy = require('http-proxy');
-
+http =      require('http')
+httpProxy = require('http-proxy')
 
 proxyServer = (req, res, proxy) ->
-
 
   req.headers.origin or= "*"
 
@@ -45,6 +43,7 @@ proxyServer = (req, res, proxy) ->
     req.headers.host = hostname
     req.url          = path
 
+    proxy.target.https = (port == '443')
 
     # Put your custom server logic here, then proxy
     proxy.proxyRequest(req, res, {
