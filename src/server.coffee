@@ -51,4 +51,9 @@ proxyServer = (req, res, proxy) ->
       port: port || 80
     });
 
-httpProxy.createServer(proxyServer).listen process.env.PORT || 9292
+if process.env.NODE_ENV is "production"
+  port = 80
+else
+  port = 9292
+
+httpProxy.createServer(proxyServer).listen port
