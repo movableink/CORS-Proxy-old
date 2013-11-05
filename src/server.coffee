@@ -51,4 +51,14 @@ proxyServer = (req, res, proxy) ->
       port: port || 80
     });
 
-httpProxy.createServer(proxyServer).listen process.env.PORT || 9292
+
+server = httpProxy.createServer(proxyServer)
+
+server.proxy.on 'proxyError', (err, req, res) ->
+  console.error err
+  res.end 'Request failed.'
+
+port = process.env.PORT || 9292
+server.listen port
+
+console.log "Listening on port #{port}"
