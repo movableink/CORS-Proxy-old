@@ -2,6 +2,7 @@ http =      require('http')
 httpProxy = require('http-proxy')
 
 proxyServer = (req, res, proxy) ->
+  start = new Date()
 
   req.headers.origin or= "*"
 
@@ -35,9 +36,6 @@ proxyServer = (req, res, proxy) ->
       res.end("Bad request. (no hostname specified)");
       return
 
-    console.log "proxying to #{hostname}#{path}"
-
-
     res.setHeader(key, value) for key, value of cors_headers
 
     req.headers.host = hostname
@@ -51,6 +49,9 @@ proxyServer = (req, res, proxy) ->
       port: port || 80
     });
 
+    proxy.once 'end', (req, res) ->
+      reqTime = (new Date()) - start
+      console.log "GET #{hostname}#{path} in #{reqTime} ms"
 
 server = httpProxy.createServer(proxyServer)
 
