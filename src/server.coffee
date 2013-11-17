@@ -1,6 +1,8 @@
 http =      require('http')
 httpProxy = require('http-proxy')
 
+httpProxy.setMaxSockets(5000)
+
 proxyServer = (req, res, proxy) ->
   start = new Date()
 
