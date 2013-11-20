@@ -1,7 +1,11 @@
 http =      require('http')
 httpProxy = require('http-proxy')
+Cache =     require('./cache')
 
 httpProxy.setMaxSockets(5000)
+
+CACHE_TIME = 10 * 1000 # 10s
+cache = new Cache(CACHE_TIME)
 
 proxyServer = (req, res, proxy) ->
   start = new Date()
@@ -40,20 +44,51 @@ proxyServer = (req, res, proxy) ->
 
     res.setHeader(key, value) for key, value of cors_headers
 
-    req.headers.host = hostname
-    req.url          = path
+    cacheKey = [host, port, path].join(':')
 
-    proxy.target.https = (port == '443')
+    if cache.has cacheKey
+      result = cache.get cacheKey
+      res.writeHead result.statusCode, result.headers
+      res.end result.body
 
-    # Put your custom server logic here, then proxy
-    proxy.proxyRequest(req, res, {
-      host: host,
-      port: port || 80
-    });
-
-    proxy.once 'end', (req, res) ->
       reqTime = (new Date()) - start
-      console.log "GET #{hostname}#{path} in #{reqTime} ms"
+      console.log "GET #{hostname}#{path} in #{reqTime} ms [CACHED]"
+
+    else if cache.inFlight cacheKey
+      cache.getLater cacheKey, (result) ->
+        res.writeHead result.statusCode, result.headers
+        res.end result.body
+
+        reqTime = (new Date()) - start
+        console.log "GET #{hostname}#{path} in #{reqTime} ms [CACHE WAIT]"
+
+    else
+      cache.lock cacheKey
+
+      req.headers.host = hostname
+      req.url          = path
+
+      proxy.target.https = (port == '443')
+
+      proxy.once 'end', (preq, pres, presponse) ->
+        result =
+          statusCode: presponse.statusCode
+          headers: presponse.headers
+          body: presponse.body
+
+        if presponse.statusCode < 400
+          cache.set cacheKey, result
+
+        cache.unlock cacheKey, result
+
+        reqTime = (new Date()) - start
+        console.log "GET #{hostname}#{path} in #{reqTime} ms [MISS]"
+
+      # Put your custom server logic here, then proxy
+      proxy.proxyRequest(req, res, {
+        host: host,
+        port: port || 80
+      });
 
 server = httpProxy.createServer(proxyServer)
 
