@@ -19,9 +19,11 @@ class Cache extends EventEmitter
     @cacheBucket[key] = value
     setTimeout (=> delete @cacheBucket[key]), @expires
 
+  # is there currently another request running on this key?
   inFlight: (key) ->
     @locked[key]?
 
+  # wait for another request to finish, and retrieve its value
   getLater: (key, cb) ->
     @once key, (value) ->
       cb(value)
