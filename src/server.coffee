@@ -48,7 +48,8 @@ proxyServer = (req, res, proxy) ->
     # Put your custom server logic here, then proxy
     proxy.proxyRequest(req, res, {
       host: host,
-      port: port || 80
+      changeOrigin: true,
+      port: parseInt(port) || 80
     });
 
     proxy.once 'end', (req, res) ->
