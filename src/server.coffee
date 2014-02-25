@@ -43,12 +43,16 @@ proxyServer = (req, res, proxy) ->
       return
 
     res.setHeader(key, value) for key, value of cors_headers
+    method = req.method
 
-    cacheKey = [host, port, path].join(':')
+    cacheKey = [method, host, port, path].join(':')
 
     if cache.has cacheKey
       result = cache.get cacheKey
+      res.setHeader 'x-cors-proxy', 'cache hit'
+      res.setHeader 'content-length', result.body.length
       res.writeHead result.statusCode, result.headers
+      console.log "cache hit length #{result.body.length}"
       res.end result.body
 
       reqTime = (new Date()) - start
@@ -56,7 +60,10 @@ proxyServer = (req, res, proxy) ->
 
     else if cache.inFlight cacheKey
       cache.getLater cacheKey, (result) ->
+        res.setHeader 'x-cors-proxy', 'cache wait'
+        res.setHeader 'content-length', result.body.length
         res.writeHead result.statusCode, result.headers
+        console.log "cache wait length #{result.body.length}"
         res.end result.body
 
         reqTime = (new Date()) - start
@@ -64,27 +71,35 @@ proxyServer = (req, res, proxy) ->
 
     else
       cache.lock cacheKey
+      res.setHeader 'x-cors-proxy', 'cache miss'
 
       req.headers.host = hostname
       req.url          = path
 
       proxy.target.https = (port == '443')
 
+      proxy.once 'start', (preq, pres, target) ->
+        cache.setupResponse pres
+
       proxy.once 'end', (preq, pres, presponse) ->
         result =
           statusCode: presponse.statusCode
           headers: presponse.headers
-          body: presponse.body
+          body: pres.cacheData
+
+        expires = parseInt req.headers['x-reverse-proxy-ttl'], 10
+        expires = if expires < 0 then null else expires * 1000 # ms
 
         if presponse.statusCode < 400
-          cache.set cacheKey, result
+          cache.set cacheKey, result, expires
+        else
+          console.log "error (#{presponse.statusCode})"
 
-        cache.unlock cacheKey, result
+        cache.unlock cacheKey
 
         reqTime = (new Date()) - start
         console.log "GET #{hostname}#{path} in #{reqTime} ms [MISS]"
 
-      # Put your custom server logic here, then proxy
       proxy.proxyRequest(req, res, {
         host: host,
         port: port || 80

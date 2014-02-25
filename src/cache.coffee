@@ -15,9 +15,11 @@ class Cache extends EventEmitter
   has: (key) ->
     @cacheBucket[key]?
 
-  set: (key, value) ->
+  set: (key, value, expires) ->
     @cacheBucket[key] = value
-    setTimeout (=> delete @cacheBucket[key]), @expires
+    expires or= @expires
+    console.log "Request cached for #{expires}ms"
+    setTimeout (=> delete @cacheBucket[key]), expires
 
   # is there currently another request running on this key?
   inFlight: (key) ->
@@ -31,10 +33,20 @@ class Cache extends EventEmitter
   lock: (key) ->
     @locked[key] = true
 
-  unlock: (key, value) ->
+  unlock: (key) ->
+    value = @get(key)
     delete @locked[key]
+    console.log "unlocked with size #{value.body.length}"
 
     @emit key, value
+
+  setupResponse: (response) ->
+    write = response.write.bind(response)
+
+    response.cacheData = ''
+    response.write = (data) ->
+      response.cacheData += data
+      write data
 
   debugLog: ->
     try
