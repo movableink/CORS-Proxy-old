@@ -73,10 +73,10 @@ proxyServer = (req, res, proxy) ->
       cache.lock cacheKey
       res.setHeader 'x-cors-proxy', 'cache miss'
 
-      req.headers.host = hostname
-      req.url          = path
+    req.headers.host = hostname
+    req.url          = path
 
-      proxy.target.https = (port == '443')
+    proxy.target.https = (port == '443')
 
       proxy.once 'start', (preq, pres, target) ->
         cache.setupResponse pres
@@ -100,10 +100,11 @@ proxyServer = (req, res, proxy) ->
         reqTime = (new Date()) - start
         console.log "GET #{hostname}#{path} in #{reqTime} ms [MISS]"
 
-      proxy.proxyRequest(req, res, {
-        host: host,
-        port: port || 80
-      });
+    proxy.proxyRequest(req, res, {
+      host: host,
+      changeOrigin: true,
+      port: parseInt(port) || 80
+    });
 
 server = httpProxy.createServer(proxyServer)
 
