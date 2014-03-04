@@ -1,7 +1,11 @@
 http =      require('http')
 httpProxy = require('http-proxy')
+Cache =     require('./cache')
 
 httpProxy.setMaxSockets(5000)
+
+CACHE_TIME = 10 * 1000 # 10s
+cache = new Cache(CACHE_TIME)
 
 proxyServer = (req, res, proxy) ->
   start = new Date()
@@ -39,22 +43,68 @@ proxyServer = (req, res, proxy) ->
       return
 
     res.setHeader(key, value) for key, value of cors_headers
+    method = req.method
 
-    req.headers.host = hostname
-    req.url          = path
+    cacheKey = [method, host, port, path].join(':')
 
-    proxy.target.https = (port == '443')
+    if cache.has cacheKey
+      result = cache.get cacheKey
+      res.setHeader 'x-cors-proxy', 'cache hit'
+      res.setHeader 'content-length', result.body.length
+      res.writeHead result.statusCode, result.headers
+      console.log "cache hit length #{result.body.length}"
+      res.end result.body
 
-    # Put your custom server logic here, then proxy
-    proxy.proxyRequest(req, res, {
-      host: host,
-      changeOrigin: true,
-      port: parseInt(port) || 80
-    });
-
-    proxy.once 'end', (req, res) ->
       reqTime = (new Date()) - start
-      console.log "GET #{hostname}#{path} in #{reqTime} ms"
+      console.log "GET #{hostname}#{path} in #{reqTime} ms [CACHED]"
+
+    else if cache.inFlight cacheKey
+      cache.getLater cacheKey, (result) ->
+        res.setHeader 'x-cors-proxy', 'cache wait'
+        res.setHeader 'content-length', result.body.length
+        res.writeHead result.statusCode, result.headers
+        console.log "cache wait length #{result.body.length}"
+        res.end result.body
+
+        reqTime = (new Date()) - start
+        console.log "GET #{hostname}#{path} in #{reqTime} ms [CACHE WAIT]"
+
+    else
+      cache.lock cacheKey
+      res.setHeader 'x-cors-proxy', 'cache miss'
+
+      req.headers.host = hostname
+      req.url          = path
+
+      proxy.target.https = (port == '443')
+
+      proxy.once 'start', (preq, pres, target) ->
+        cache.setupResponse pres
+
+      proxy.once 'end', (preq, pres, presponse) ->
+        result =
+          statusCode: presponse.statusCode
+          headers: presponse.headers
+          body: pres.cacheData
+
+        expires = parseInt req.headers['x-reverse-proxy-ttl'], 10
+        expires = if expires < 0 then null else expires * 1000 # ms
+
+        if presponse.statusCode < 400
+          cache.set cacheKey, result, expires
+        else
+          console.log "error (#{presponse.statusCode})"
+
+        cache.unlock cacheKey
+
+        reqTime = (new Date()) - start
+        console.log "GET #{hostname}#{path} in #{reqTime} ms [MISS]"
+
+      proxy.proxyRequest(req, res, {
+        host: host,
+        changeOrigin: true,
+        port: parseInt(port) || 80
+      });
 
 server = httpProxy.createServer(proxyServer)
 
