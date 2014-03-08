@@ -4,6 +4,7 @@ class Cache extends EventEmitter
   constructor: (@expires) ->
     @cacheBucket = {}
     @locked = {}
+    @setMaxListeners(5000)
 
     setInterval =>
       @debugLog()
