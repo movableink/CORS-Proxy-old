@@ -120,5 +120,6 @@ console.log "Listening on port #{port}"
 
 process.on 'uncaughtException', (err) ->
   console.error err
+  server.close()
   honeybadger.notifyError err, {}, ->
     process.exit 1
