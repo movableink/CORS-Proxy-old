@@ -1,6 +1,7 @@
-http =      require('http')
-httpProxy = require('http-proxy')
-Cache =     require('./cache')
+http =        require('http')
+httpProxy =   require('http-proxy')
+honeybadger = require('./honeybadger')
+Cache =       require('./cache')
 
 httpProxy.setMaxSockets(5000)
 
@@ -116,3 +117,9 @@ port = process.env.PORT || 9292
 server.listen port
 
 console.log "Listening on port #{port}"
+
+process.on 'uncaughtException', (err) ->
+  console.error err
+  server.close()
+  honeybadger.notifyError err, {}, ->
+    process.exit 1

@@ -1,8 +1,9 @@
 {
   "name": "corsproxy",
   "dependencies": {
-    "http-proxy"    : "~0.10",
-    "coffee-script" : "1.3.3"
+    "http-proxy"      : "~0.10",
+    "coffee-script"   : "1.3.3",
+    "node-honeybadger": "git://github.com/movableink/honeybadger-node#5899c78"
   },
   "engines": {
     "node": "0.6.x",
