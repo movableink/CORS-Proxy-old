@@ -1,5 +1,6 @@
 http =        require 'http'
 https =       require 'https'
+connect =     require 'connect'
 url =         require 'url'
 httpProxy =   require 'http-proxy'
 honeybadger = require './honeybadger'
@@ -125,10 +126,10 @@ proxyServer = (req, res) ->
         console.error err
         res.end 'Request failed.'
 
-server = http.createServer(proxyServer)
+app = connect().use(proxyServer)
 
 port = process.env.PORT || 9292
-server.listen port
+http.createServer(app).listen port
 
 console.log "Listening on port #{port}"
 
