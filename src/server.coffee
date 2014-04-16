@@ -1,10 +1,10 @@
-http =        require 'http'
-https =       require 'https'
-connect =     require 'connect'
-url =         require 'url'
-httpProxy =   require 'http-proxy'
-honeybadger = require './honeybadger'
-Cache =       require './cache'
+http =          require 'http'
+connect =       require 'connect'
+url =           require 'url'
+httpProxy =     require 'http-proxy'
+honeybadger =   require './honeybadger'
+Cache =         require './cache'
+requestLogger = require './request_logger'
 
 CACHE_TIME = 10 * 1000 # 10s
 cache = new Cache(CACHE_TIME)
@@ -62,26 +62,23 @@ proxyServer = (req, res) ->
     cacheKey = [method, proxyUrl.target].join(':')
 
     if cache.has cacheKey
+      res.cacheStatus = 'hit'
       result = cache.get cacheKey
       res.setHeader 'x-cors-proxy', 'cache hit'
       res.setHeader 'content-length', result.body.length
       res.writeHead result.statusCode, result.headers
       res.end result.body
 
-      reqTime = (new Date()) - start
-      console.log "GET #{proxyUrl.target} in #{reqTime} ms [CACHED]"
-
     else if cache.inFlight cacheKey
+      res.cacheStatus = 'wait'
       cache.getLater cacheKey, (result) ->
         res.setHeader 'x-cors-proxy', 'cache wait'
         res.setHeader 'content-length', result.body.length
         res.writeHead result.statusCode, result.headers
         res.end result.body
 
-        reqTime = (new Date()) - start
-        console.log "GET #{proxyUrl.target} in #{reqTime} ms [CACHE WAIT]"
-
     else
+      res.cacheStatus = 'miss'
       cache.lock cacheKey
       res.setHeader 'x-cors-proxy', 'cache miss'
 
@@ -110,10 +107,8 @@ proxyServer = (req, res) ->
 
           cache.unlock cacheKey, result
 
-          reqTime = (new Date()) - start
-          console.log "GET #{proxyUrl.target} in #{reqTime} ms [MISS]"
-
-      # hack because http-proxy will only use the original request's path
+      # ugly hack because http-proxy will only use the original request's path
+      originalUrl = req.url
       req.url = proxyUrl.target
 
       proxy.web req, res,
@@ -122,11 +117,15 @@ proxyServer = (req, res) ->
         headers:
           host: proxyUrl.hostname
 
+      req.url = originalUrl
+
       proxy.on 'proxyError', (err, req, res) ->
         console.error err
         res.end 'Request failed.'
 
-app = connect().use(proxyServer)
+app = connect()
+  .use(requestLogger())
+  .use(proxyServer)
 
 port = process.env.PORT || 9292
 http.createServer(app).listen port
