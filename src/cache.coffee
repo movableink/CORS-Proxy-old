@@ -1,4 +1,9 @@
+# Cache is a simple in-memory cache.
+#
+# It supports expiration (using setTimeout) and locking.
+
 EventEmitter = require('events').EventEmitter
+cacheMiddleware = require './cache_middleware'
 
 class Cache extends EventEmitter
   constructor: (@expires) ->
@@ -19,7 +24,6 @@ class Cache extends EventEmitter
   set: (key, value, expires) ->
     @cacheBucket[key] = value
     expires or= @expires
-    console.log "Request cached for #{expires}ms"
     setTimeout (=> delete @cacheBucket[key]), expires
 
   # is there currently another request running on this key?
@@ -37,7 +41,6 @@ class Cache extends EventEmitter
   unlock: (key, defaultValue) ->
     value = @get(key) or defaultValue
     delete @locked[key]
-    console.log "unlocked with size #{value.body.length}"
 
     @emit key, value
 
@@ -50,5 +53,7 @@ class Cache extends EventEmitter
     catch e
       log.error "Problem listing cache info"
 
+  middleware: ->
+    cacheMiddleware @
 
 module.exports = Cache
