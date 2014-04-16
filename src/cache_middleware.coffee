@@ -31,15 +31,20 @@ module.exports = (cache) ->
       res.cacheStatus = 'miss'
       res.setHeader 'x-cors-cache', res.cacheStatus
 
-      console.log "[CACHE] locked {#{cacheKey}}"
+      cache.log "locked {#{cacheKey}}"
       cache.lock cacheKey
 
       write = res.write.bind(res)
+      end = res.end.bind(res)
 
       res.cacheData = ''
       res.write = (data) ->
-        res.cacheData += data.toString()
+        res.cacheData += data.toString() if data
         write data
+
+      res.end = (data) ->
+        res.cacheData += data.toString() if data
+        end data
 
       res.on 'finish', =>
         result =
@@ -51,11 +56,12 @@ module.exports = (cache) ->
         expires = if expires < 0 or not expires then cache.expires else expires * 1000 # ms
 
         if res.statusCode < 400
-          console.log "[CACHE] set {#{cacheKey}} expires in #{expires}ms"
+          cache.log "set {#{cacheKey}} expires in #{expires}ms"
           cache.set cacheKey, result, expires
         else
-          console.log "[CACHE] http error #{res.statusCode} on #{cacheKey}, not caching"
+          cache.log "http error #{res.statusCode} on #{cacheKey}, not caching"
 
         cache.unlock cacheKey, result
+        cache.log "unlocked {#{cacheKey}}"
 
       next()

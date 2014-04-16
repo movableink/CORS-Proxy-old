@@ -6,7 +6,7 @@ EventEmitter = require('events').EventEmitter
 cacheMiddleware = require './cache_middleware'
 
 class Cache extends EventEmitter
-  constructor: (@expires) ->
+  constructor: (@expires, @options={}) ->
     @cacheBucket = {}
     @locked = {}
     @setMaxListeners(5000)
@@ -44,14 +44,24 @@ class Cache extends EventEmitter
 
     @emit key, value
 
+  clear: ->
+    @cacheBucket = {}
+    @locked = {}
+
+  keys: ->
+    Object.keys(@cacheBucket)
+
+  log: (message) ->
+    console.log "[CACHE] #{message}" unless @options.logging is false
+
   debugLog: ->
     try
       keys = Object.keys(@cacheBucket)
       size = 0
       size += (@cacheBucket[key].length || 0) for key in keys
-      log.debug "Cache has #{keys.length} keys of size #{size}b" if size > 0
+      @log "Info: has #{keys.length} keys of size #{size}b" if size > 0
     catch e
-      log.error "Problem listing cache info"
+      @log "Problem listing cache info"
 
   middleware: ->
     cacheMiddleware @

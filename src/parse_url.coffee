@@ -14,6 +14,8 @@
 url = require 'url'
 
 module.exports = (requestUrl) ->
+  return {target: '', hostname: ''} unless requestUrl
+
   [_, port] = (requestUrl.match(/^\/[^\/]+\:(\d+)/) || [])
   port = parseInt(port, 10) or 80
   proto = if port is 443 then 'https' else 'http'

@@ -44,7 +44,8 @@ app = connect()
   .use(proxyServer)
 
 port = process.env.PORT || 9292
-http.createServer(app).listen port
+server = http.createServer(app)
+server.listen port
 
 console.log "Listening on port #{port}"
 
