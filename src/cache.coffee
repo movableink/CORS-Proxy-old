@@ -34,20 +34,12 @@ class Cache extends EventEmitter
   lock: (key) ->
     @locked[key] = true
 
-  unlock: (key) ->
-    value = @get(key)
+  unlock: (key, defaultValue) ->
+    value = @get(key) or defaultValue
     delete @locked[key]
     console.log "unlocked with size #{value.body.length}"
 
     @emit key, value
-
-  setupResponse: (response) ->
-    write = response.write.bind(response)
-
-    response.cacheData = ''
-    response.write = (data) ->
-      response.cacheData += data
-      write data
 
   debugLog: ->
     try

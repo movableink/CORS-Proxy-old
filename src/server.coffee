@@ -1,14 +1,28 @@
-http =        require('http')
-httpProxy =   require('http-proxy')
-honeybadger = require('./honeybadger')
-Cache =       require('./cache')
-
-httpProxy.setMaxSockets(5000)
+http =        require 'http'
+https =       require 'https'
+url =         require 'url'
+httpProxy =   require 'http-proxy'
+honeybadger = require './honeybadger'
+Cache =       require './cache'
 
 CACHE_TIME = 10 * 1000 # 10s
 cache = new Cache(CACHE_TIME)
 
-proxyServer = (req, res, proxy) ->
+parseUrl = (requestUrl) ->
+  [_, port] = (requestUrl.match(/^\/[^\/]+\:(\d+)/) || [])
+  port = parseInt(port, 10) or 80
+  proto = if port is 443 then 'https' else 'http'
+  target = url.parse(requestUrl.replace(/^\//, "#{proto}://"))
+  target.host = null
+  target.port = null if port is 80 or port is 443
+
+  {
+    hostname: target.hostname
+    path: target.path
+    target: target.format()
+  }
+
+proxyServer = (req, res) ->
   start = new Date()
 
   req.headers.origin or= "*"
@@ -19,7 +33,7 @@ proxyServer = (req, res, proxy) ->
     headers = 'accept, accept-charset, accept-encoding, accept-language, authorization, content-length, content-type, host, origin, proxy-connection, referer, user-agent, x-requested-with'
     headers += ", #{header}" for header in req.headers when req.indexOf('x-') is 0
 
-  cors_headers =
+  corsHeaders =
     'access-control-allow-methods'     : 'HEAD, POST, GET, PUT, PATCH, DELETE'
     'access-control-max-age'           : '86400' # 24 hours
     'access-control-allow-headers'     : headers
@@ -28,90 +42,90 @@ proxyServer = (req, res, proxy) ->
 
 
   if req.method is 'OPTIONS'
-    console.log 'responding to OPTIONS request'
+    console.log "OPTIONS #{req.url}"
     res.writeHead(200, cors_headers);
     res.end();
     return
 
   else
-    [ignore, hostname, path] = (req.url.match(/\/([^\/]+)(.*)/) || [])
-    [host, port] = (hostname || "").split(/:/)
-
-    unless host
+    proxyUrl = parseUrl req.url
+    unless proxyUrl.hostname
       console.log "no hostname specified"
       res.writeHead(400, {})
       res.end("Bad request. (no hostname specified)");
       return
 
-    res.setHeader(key, value) for key, value of cors_headers
+    res.setHeader(key, value) for key, value of corsHeaders
     method = req.method
 
-    cacheKey = [method, host, port, path].join(':')
+    cacheKey = [method, proxyUrl.target].join(':')
 
     if cache.has cacheKey
       result = cache.get cacheKey
       res.setHeader 'x-cors-proxy', 'cache hit'
       res.setHeader 'content-length', result.body.length
       res.writeHead result.statusCode, result.headers
-      console.log "cache hit length #{result.body.length}"
       res.end result.body
 
       reqTime = (new Date()) - start
-      console.log "GET #{hostname}#{path} in #{reqTime} ms [CACHED]"
+      console.log "GET #{proxyUrl.target} in #{reqTime} ms [CACHED]"
 
     else if cache.inFlight cacheKey
       cache.getLater cacheKey, (result) ->
         res.setHeader 'x-cors-proxy', 'cache wait'
         res.setHeader 'content-length', result.body.length
         res.writeHead result.statusCode, result.headers
-        console.log "cache wait length #{result.body.length}"
         res.end result.body
 
         reqTime = (new Date()) - start
-        console.log "GET #{hostname}#{path} in #{reqTime} ms [CACHE WAIT]"
+        console.log "GET #{proxyUrl.target} in #{reqTime} ms [CACHE WAIT]"
 
     else
       cache.lock cacheKey
       res.setHeader 'x-cors-proxy', 'cache miss'
 
-      req.headers.host = hostname
-      req.url          = path
+      req.headers.host = proxyUrl.hostname
 
-      proxy.target.https = (port == '443')
+      proxy = httpProxy.createProxyServer()
 
-      proxy.once 'start', (preq, pres, target) ->
-        cache.setupResponse pres
+      proxy.once 'proxyRes', (pres) ->
+        responseBody = ''
+        pres.setEncoding 'utf8'
+        pres.on 'data', (chunk) -> responseBody += chunk
 
-      proxy.once 'end', (preq, pres, presponse) ->
-        result =
-          statusCode: presponse.statusCode
-          headers: presponse.headers
-          body: pres.cacheData
+        pres.on 'end', ->
+          result =
+            statusCode: pres.statusCode
+            headers: pres.headers
+            body: responseBody
 
-        expires = parseInt req.headers['x-reverse-proxy-ttl'], 10
-        expires = if expires < 0 then null else expires * 1000 # ms
+          expires = parseInt req.headers['x-reverse-proxy-ttl'], 10
+          expires = if expires < 0 then null else expires * 1000 # ms
 
-        if presponse.statusCode < 400
-          cache.set cacheKey, result, expires
-        else
-          console.log "error (#{presponse.statusCode})"
+          if pres.statusCode < 400
+            cache.set cacheKey, result, expires
+          else
+            console.log "error (#{pres.statusCode})"
 
-        cache.unlock cacheKey
+          cache.unlock cacheKey, result
 
-        reqTime = (new Date()) - start
-        console.log "GET #{hostname}#{path} in #{reqTime} ms [MISS]"
+          reqTime = (new Date()) - start
+          console.log "GET #{proxyUrl.target} in #{reqTime} ms [MISS]"
 
-      proxy.proxyRequest(req, res, {
-        host: host,
-        changeOrigin: true,
-        port: parseInt(port) || 80
-      });
+      # hack because http-proxy will only use the original request's path
+      req.url = proxyUrl.target
 
-server = httpProxy.createServer(proxyServer)
+      proxy.web req, res,
+        target: proxyUrl.target
+        secure: false
+        headers:
+          host: proxyUrl.hostname
 
-server.proxy.on 'proxyError', (err, req, res) ->
-  console.error err
-  res.end 'Request failed.'
+      proxy.on 'proxyError', (err, req, res) ->
+        console.error err
+        res.end 'Request failed.'
+
+server = http.createServer(proxyServer)
 
 port = process.env.PORT || 9292
 server.listen port
@@ -119,7 +133,9 @@ server.listen port
 console.log "Listening on port #{port}"
 
 process.on 'uncaughtException', (err) ->
+  throw err unless server._handle
+
   console.error err
   server.close()
   honeybadger.notifyError err, {}, ->
-    process.exit 1
+    throw err
