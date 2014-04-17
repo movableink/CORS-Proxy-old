@@ -49,7 +49,7 @@ describe 'cacheMiddleware', ->
 
       setTimeout ->
         cache.set "GET,/",
-          headers: {'x-foo': 'bar'}
+          headers: {'x-foo': 'bar', 'x-cors-cache': 'miss'}
           body: "foobar"
           statusCode: 200
         cache.unlock "GET,/"
@@ -58,7 +58,7 @@ describe 'cacheMiddleware', ->
   describe 'cache hit', ->
     it 'returns a cache hit', (done) ->
       cache.set "GET,/",
-        headers: {'x-foo': 'bar'}
+        headers: {'x-foo': 'bar', 'x-cors-cache': 'miss'}
         body: "foobar"
         statusCode: 200
 

@@ -11,10 +11,9 @@ module.exports = (cache) ->
 
     if cache.has cacheKey
       res.cacheStatus = 'hit'
-      res.setHeader 'x-cors-cache', res.cacheStatus
 
       result = cache.get cacheKey
-      res.setHeader 'content-length', result.body.length
+      result.headers['x-cors-cache'] = res.cacheStatus
       res.writeHead result.statusCode, result.headers
       res.end result.body
 
@@ -23,7 +22,7 @@ module.exports = (cache) ->
       res.setHeader 'x-cors-cache', res.cacheStatus
 
       cache.getLater cacheKey, (result) ->
-        res.setHeader 'content-length', result.body.length
+        result.headers['x-cors-cache'] = res.cacheStatus
         res.writeHead result.statusCode, result.headers
         res.end result.body
 
