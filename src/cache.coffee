@@ -1,7 +1,12 @@
+# Cache is a simple in-memory cache.
+#
+# It supports expiration (using setTimeout) and locking.
+
 EventEmitter = require('events').EventEmitter
+cacheMiddleware = require './cache_middleware'
 
 class Cache extends EventEmitter
-  constructor: (@expires) ->
+  constructor: (@expires, @options={}) ->
     @cacheBucket = {}
     @locked = {}
     @setMaxListeners(5000)
@@ -19,7 +24,6 @@ class Cache extends EventEmitter
   set: (key, value, expires) ->
     @cacheBucket[key] = value
     expires or= @expires
-    console.log "Request cached for #{expires}ms"
     setTimeout (=> delete @cacheBucket[key]), expires
 
   # is there currently another request running on this key?
@@ -34,29 +38,32 @@ class Cache extends EventEmitter
   lock: (key) ->
     @locked[key] = true
 
-  unlock: (key) ->
-    value = @get(key)
+  unlock: (key, defaultValue) ->
+    value = @get(key) or defaultValue
     delete @locked[key]
-    console.log "unlocked with size #{value.body.length}"
 
     @emit key, value
 
-  setupResponse: (response) ->
-    write = response.write.bind(response)
+  clear: ->
+    @cacheBucket = {}
+    @locked = {}
 
-    response.cacheData = ''
-    response.write = (data) ->
-      response.cacheData += data
-      write data
+  keys: ->
+    Object.keys(@cacheBucket)
+
+  log: (message) ->
+    console.log "[CACHE] #{message}" unless @options.logging is false
 
   debugLog: ->
     try
       keys = Object.keys(@cacheBucket)
       size = 0
       size += (@cacheBucket[key].length || 0) for key in keys
-      log.debug "Cache has #{keys.length} keys of size #{size}b" if size > 0
+      @log "Info: has #{keys.length} keys of size #{size}b" if size > 0
     catch e
-      log.error "Problem listing cache info"
+      @log "Problem listing cache info"
 
+  middleware: ->
+    cacheMiddleware @
 
 module.exports = Cache
