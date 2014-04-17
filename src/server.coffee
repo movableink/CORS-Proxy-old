@@ -34,6 +34,7 @@ proxyServer = (req, res) ->
     secure: false
     headers:
       host: proxyUrl.hostname
+      'accept-encoding': 'identity'
 
   req.url = originalUrl
 
