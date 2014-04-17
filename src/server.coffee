@@ -8,7 +8,7 @@ cors          = require './cors'
 parseUrl      = require './parse_url'
 
 CACHE_TIME = 10 * 1000 # 10s
-cache = new Cache(CACHE_TIME)
+cache = new Cache(CACHE_TIME, logging: false)
 
 proxyServer = (req, res) ->
   proxyUrl = parseUrl req.url
