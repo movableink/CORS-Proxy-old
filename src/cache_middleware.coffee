@@ -38,20 +38,39 @@ module.exports = (cache) ->
       write = res.write.bind(res)
       end = res.end.bind(res)
 
-      res.cacheData = ''
+      chunks = []
+      bodyLength = 0
+
       res.write = (data) ->
-        res.cacheData += data.toString() if data
+        chunks.push data
+        bodyLength += data.length
         write data
 
       res.end = (data) ->
-        res.cacheData += data.toString() if data
+        if data
+          chunks.push data
+          bodyLength += data.length
         end data
 
       res.on 'finish', =>
+        if chunks.length and Buffer.isBuffer(chunks[0])
+          body = new Buffer(bodyLength)
+          i = 0
+          for chunk in chunks
+            chunk.copy body, i, 0, chunk.length
+            i += chunk.length
+          body = body.toString(res.encoding) if res.encoding
+        else if chunks.length
+          if res.encoding is 'utf8' and chunks[0].length > 0 and chunks[0][0] is "\uFEFF"
+            chunks[0] = chunks[0].substring(1)
+          body = chunks.join ''
+        else
+          body = '' # no data
+
         result =
           statusCode: res.statusCode
           headers: res._headers
-          body: res.cacheData
+          body: body
 
         expires = parseInt req.headers['x-reverse-proxy-ttl'], 10
         expires = if expires < 0 or not expires then cache.expires else expires * 1000 # ms
