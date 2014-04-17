@@ -5,6 +5,6 @@ module.exports = ->
     res.on 'finish', ->
       reqTime = (new Date()) - start
       cacheStatus = res.cacheStatus or 'miss'
-      console.log "GET #{req.url} in #{reqTime} ms (cache #{cacheStatus})"
+      console.log "#{res.statusCode} GET #{req.url} in #{reqTime} ms (cache #{cacheStatus})"
 
     next()
