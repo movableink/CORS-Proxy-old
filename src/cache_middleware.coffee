@@ -5,6 +5,8 @@
 # This prevents the thundering herd problem, where many requests come in for a URL
 # before any of them can be cached.
 
+responseBody = require './response_body'
+
 module.exports = (cache) ->
   return (req, res, next) ->
     cacheKey = [req.method, req.url]
@@ -35,42 +37,13 @@ module.exports = (cache) ->
       cache.log "locked {#{cacheKey}}"
       cache.lock cacheKey
 
-      write = res.write.bind(res)
-      end = res.end.bind(res)
-
-      chunks = []
-      bodyLength = 0
-
-      res.write = (data) ->
-        chunks.push data
-        bodyLength += data.length
-        write data
-
-      res.end = (data) ->
-        if data
-          chunks.push data
-          bodyLength += data.length
-        end data
+      getBody = responseBody.from res
 
       res.on 'finish', =>
-        if chunks.length and Buffer.isBuffer(chunks[0])
-          body = new Buffer(bodyLength)
-          i = 0
-          for chunk in chunks
-            chunk.copy body, i, 0, chunk.length
-            i += chunk.length
-          body = body.toString(res.encoding) if res.encoding
-        else if chunks.length
-          if res.encoding is 'utf8' and chunks[0].length > 0 and chunks[0][0] is "\uFEFF"
-            chunks[0] = chunks[0].substring(1)
-          body = chunks.join ''
-        else
-          body = '' # no data
-
         result =
           statusCode: res.statusCode
           headers: res._headers
-          body: body
+          body: getBody()
 
         expires = parseInt req.headers['x-reverse-proxy-ttl'], 10
         expires = if expires < 0 or not expires then cache.expires else expires * 1000 # ms
