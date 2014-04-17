@@ -14,6 +14,7 @@ module.exports = (cache) ->
 
       result = cache.get cacheKey
       result.headers['x-cors-cache'] = res.cacheStatus
+      delete result.headers['date']
       res.writeHead result.statusCode, result.headers
       res.end result.body
 
@@ -23,6 +24,7 @@ module.exports = (cache) ->
 
       cache.getLater cacheKey, (result) ->
         result.headers['x-cors-cache'] = res.cacheStatus
+        delete result.headers['date']
         res.writeHead result.statusCode, result.headers
         res.end result.body
 
