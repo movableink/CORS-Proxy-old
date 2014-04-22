@@ -43,7 +43,7 @@ app = connect()
   .use(requestLogger())
   .use(cors())
   .use(rawBody())
-  .use(restreamer()) # needed because rawBody eats the body and http-proxy can't deal
+  .use(restreamer(stringify: (x) -> x)) # rawBody eats the body and http-proxy can't deal
   .use(cache.middleware())
   .use(proxyServer)
 
