@@ -1,11 +1,13 @@
 http          = require 'http'
 connect       = require 'connect'
+restreamer    = require 'connect-restreamer'
 httpProxy     = require 'http-proxy'
 honeybadger   = require './honeybadger'
 Cache         = require './cache'
 requestLogger = require './request_logger'
 cors          = require './cors'
 parseUrl      = require './parse_url'
+rawBody       = require './raw_body'
 
 CACHE_TIME = 10 * 1000 # 10s
 cache = new Cache(CACHE_TIME, logging: false)
@@ -40,6 +42,8 @@ proxyServer = (req, res) ->
 app = connect()
   .use(requestLogger())
   .use(cors())
+  .use(rawBody())
+  .use(restreamer()) # needed because rawBody eats the body and http-proxy can't deal
   .use(cache.middleware())
   .use(proxyServer)
 

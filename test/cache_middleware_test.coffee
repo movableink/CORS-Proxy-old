@@ -1,10 +1,14 @@
-connect = require 'connect'
-request = require 'supertest'
-Cache   = require '../src/cache'
+connect    = require 'connect'
+restreamer = require 'connect-restreamer'
+request    = require 'supertest'
+Cache      = require '../src/cache'
+rawBody    = require '../src/raw_body'
 
 cache = new Cache(10000, logging: false)
 
 app = connect()
+app.use rawBody()
+app.use restreamer()
 app.use cache.middleware()
 app.use (req, res) ->
   res.writeHead(200, {'custom': 'foo'})
@@ -26,14 +30,26 @@ describe 'cacheMiddleware', ->
       request(app)
         .get('/')
         .expect 200, ->
-          cache.get('GET,/').body.should.equal "hello"
+          cache.get("GET,/").body.should.equal "hello"
           done()
 
     it 'unlocks the cache', (done) ->
       request(app)
         .get('/')
         .expect 200, ->
-          cache.inFlight('GET,/').should.equal false
+          cache.inFlight("GET,/").should.equal false
+          done()
+
+  describe 'POST', ->
+    it 'sets the cache', (done) ->
+      body = '{"foo": "bar"}'
+      hash = '94232c5b8fc9272f6f73a1e36eb68fcf' # md5 hash of {"foo": "bar"}
+
+      request(app)
+        .post('/')
+        .send(body)
+        .expect 200, ->
+          cache.get("POST,/,#{hash}").body.should.equal "hello"
           done()
 
   describe 'cache wait', ->

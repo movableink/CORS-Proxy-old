@@ -5,11 +5,17 @@
 # This prevents the thundering herd problem, where many requests come in for a URL
 # before any of them can be cached.
 
-responseBody = require './response_body'
+crypto         = require 'crypto'
+responseBody   = require './response_body'
+getRequestBody = require 'raw-body'
 
 module.exports = (cache) ->
   return (req, res, next) ->
-    cacheKey = [req.method, req.url]
+    if req.method is 'POST'
+      bodyHash = crypto.createHash('md5').update(req.body or '').digest('hex')
+      cacheKey = [req.method, req.url, bodyHash]
+    else
+      cacheKey = [req.method, req.url]
 
     if cache.has cacheKey
       res.cacheStatus = 'hit'
