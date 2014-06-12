@@ -9,6 +9,8 @@ cors          = require './cors'
 parseUrl      = require './parse_url'
 rawBody       = require './raw_body'
 
+HEADERS = ['allow-origin', 'allow-headers', 'allow-credentials', 'allow-methods', 'max-age']
+
 CACHE_TIME = 10 * 1000 # 10s
 cache = new Cache(CACHE_TIME, logging: false)
 
@@ -36,6 +38,10 @@ proxyServer = (req, res) ->
     secure: false
     headers:
       host: proxyUrl.hostname
+
+  proxy.on 'proxyRes', (proxyRes) ->
+    delete proxyRes?.headers?["access-control-#{name}"] for name in HEADERS
+    delete proxyRes?.headers?['x-frame-options']
 
   req.url = originalUrl
 
