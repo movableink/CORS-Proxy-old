@@ -11,7 +11,7 @@ module.exports = ->
       'access-control-max-age'           : '86400' # 24 hours
       'access-control-allow-headers'     : headers
       'access-control-allow-credentials' : 'true'
-      'access-control-allow-origin'      : req.headers.origin or "*"
+      'access-control-allow-origin'      : '*'
       'x-frame-options'                  : ''
 
     res.setHeader(key, value) for key, value of corsHeaders
