@@ -29,11 +29,11 @@ describe 'cors', ->
         .expect('access-control-allow-headers', /x-foo/)
         .expect(200, done)
 
-    it 'sends back allow-origin * even if the origin is set', (done) ->
+    it 'echoes the origin', (done) ->
       request(app)
         .options('/')
         .set('origin', 'myorigin')
-        .expect('access-control-allow-origin', '*')
+        .expect('access-control-allow-origin', 'myorigin')
         .expect(200, done)
 
     it 'uses * if the origin is not set', (done) ->
