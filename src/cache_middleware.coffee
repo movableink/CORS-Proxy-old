@@ -11,11 +11,12 @@ getRequestBody = require 'raw-body'
 
 module.exports = (cache) ->
   return (req, res, next) ->
+    origin = req.headers?.origin || '*'
     if req.method is 'POST'
       bodyHash = crypto.createHash('md5').update(req.body or '').digest('hex')
-      cacheKey = [req.method, req.url, bodyHash]
+      cacheKey = [req.method, req.url, origin, bodyHash]
     else
-      cacheKey = [req.method, req.url]
+      cacheKey = [req.method, req.url, origin]
 
     if cache.has cacheKey
       res.cacheStatus = 'hit'
