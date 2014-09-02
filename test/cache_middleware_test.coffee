@@ -29,15 +29,23 @@ describe 'cacheMiddleware', ->
     it 'sets the cache', (done) ->
       request(app)
         .get('/')
+        .set('origin', 'http://foobar.com')
         .expect 200, ->
-          cache.get("GET,/").body.should.equal "hello"
+          cache.get("GET,/,http://foobar.com").body.should.equal "hello"
+          done()
+
+    it 'uses * origin if no origin sent', (done) ->
+      request(app)
+        .get('/')
+        .expect 200, ->
+          cache.get("GET,/,*").body.should.equal "hello"
           done()
 
     it 'unlocks the cache', (done) ->
       request(app)
         .get('/')
         .expect 200, ->
-          cache.inFlight("GET,/").should.equal false
+          cache.inFlight("GET,/,*").should.equal false
           done()
 
   describe 'POST', ->
@@ -49,12 +57,12 @@ describe 'cacheMiddleware', ->
         .post('/')
         .send(body)
         .expect 200, ->
-          cache.get("POST,/,#{hash}").body.should.equal "hello"
+          cache.get("POST,/,*,#{hash}").body.should.equal "hello"
           done()
 
   describe 'cache wait', ->
     it 'returns a cache wait', (done) ->
-      cache.lock "GET,/"
+      cache.lock "GET,/,*"
 
       request(app)
         .get('/')
@@ -64,16 +72,16 @@ describe 'cacheMiddleware', ->
         .expect 200, done
 
       setTimeout ->
-        cache.set "GET,/",
+        cache.set "GET,/,*",
           headers: {'x-foo': 'bar', 'x-cors-cache': 'miss'}
           body: "foobar"
           statusCode: 200
-        cache.unlock "GET,/"
+        cache.unlock "GET,/,*"
       , 5
 
   describe 'cache hit', ->
     it 'returns a cache hit', (done) ->
-      cache.set "GET,/",
+      cache.set "GET,/,*",
         headers: {'x-foo': 'bar', 'x-cors-cache': 'miss'}
         body: "foobar"
         statusCode: 200
