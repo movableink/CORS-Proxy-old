@@ -8,6 +8,8 @@ cors          = require './cors'
 rawBody       = require './raw_body'
 proxy         = require './proxy'
 
+process.title = 'node (CORS proxy)'
+
 CACHE_TIME = 10 * 1000 # 10s
 cache = new Cache(CACHE_TIME, logging: false)
 
