@@ -13,7 +13,6 @@ module.exports = ->
       'access-control-allow-credentials' : 'true'
       'access-control-allow-origin'      : req.headers.origin or "*"
       'x-frame-options'                  : ''
-      'x-forwarded-proto'                : ''
 
     res.setHeader(key, value) for key, value of corsHeaders
 

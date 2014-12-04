@@ -12,6 +12,9 @@ module.exports = (req, res) ->
     res.end("Bad request. (no hostname specified)");
     return
 
+  delete req.headers?['x-forwarded-proto']
+  delete req.headers?['x-forwarded-for']
+
   proxy = httpProxy.createProxyServer()
   proxy.on 'error', (err, req, res) ->
     console.error err
