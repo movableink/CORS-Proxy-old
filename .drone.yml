@@ -11,5 +11,5 @@ notify:
   email:
     recipients:
       - dev@movableink.com
-    on_success: after_failure
-    on_failure: after_success
+    on_success: change
+    on_failure: change
