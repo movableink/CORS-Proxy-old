@@ -1,0 +1,15 @@
+image: bradrydzewski/node:0.10
+
+script:
+  - npm install
+  - npm test
+
+branches:
+  - master
+
+notify:
+  email:
+    recipients:
+      - dev@movableink.com
+    on_success: after_failure
+    on_failure: after_success
