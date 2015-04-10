@@ -7,6 +7,7 @@ requestLogger = require './request_logger'
 cors          = require './cors'
 rawBody       = require './raw_body'
 proxy         = require './proxy'
+health        = require './health'
 
 process.title = 'node (CORS proxy)'
 
@@ -15,6 +16,7 @@ cache = new Cache(CACHE_TIME, logging: false)
 
 app = connect()
   .use(requestLogger())
+  .use(health)
   .use(cors())
   .use(rawBody())
   .use(restreamer(stringify: (x) -> x)) # rawBody eats the body and http-proxy can't deal
