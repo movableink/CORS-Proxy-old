@@ -29,10 +29,12 @@ server.listen port
 
 console.log "Listening on port #{port}"
 
-process.on 'uncaughtException', (err) ->
-  throw err unless server._handle
 
-  console.error err
+process.on 'uncaughtException', (err) ->
   server.close()
-  honeybadger.notifyError err, {}, ->
-    throw err
+  console.error "Uncaught exception: #{err.message}", backtrace: err.stack
+  honeybadger.send(err)
+
+  honeybadger.once "sent", -> process.exit(1)
+  honeybadger.once "error", -> process.exit(1)
+  honeybadger.once "remoteError", -> process.exit(1)

@@ -6,7 +6,7 @@
     "connect"         : "2.14.4",
     "raw-body"        : "1.1.4",
     "connect-restreamer": "1.0.0",
-    "node-honeybadger": "git://github.com/movableink/honeybadger-node#5899c78"
+    "node-honeybadger": "0.5"
   },
   "scripts": {
     "start": "./node_modules/.bin/coffee src/server.coffee",
