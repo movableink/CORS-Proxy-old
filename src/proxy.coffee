@@ -18,8 +18,9 @@ module.exports = (req, res) ->
   proxy = httpProxy.createProxyServer()
   proxy.on 'error', (err, req, res) ->
     console.error err
-    res.writeHead(500, {})
-    res.end 'Request failed.'
+    if !res.headersSent
+      res.writeHead(500, {})
+      res.end 'Request failed.'
 
   # ugly hack because http-proxy will only use the original request's path
   originalUrl = req.url
