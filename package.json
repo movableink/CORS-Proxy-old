@@ -1,7 +1,7 @@
 {
   "name": "corsproxy",
   "dependencies": {
-    "http-proxy"      : "1.1.2",
+    "http-proxy"      : "1.11.2",
     "coffee-script"   : "1.3.3",
     "connect"         : "2.14.4",
     "raw-body"        : "1.1.4",
