@@ -6,13 +6,29 @@ rawBody    = require '../src/raw_body'
 
 cache = new Cache(10000, logging: false)
 
-app = connect()
-app.use rawBody()
-app.use restreamer()
-app.use cache.middleware()
-app.use (req, res) ->
+makeApp = (cb) ->
+  app = connect()
+  app.use rawBody()
+  app.use restreamer()
+  app.use cache.middleware()
+  app.use cb
+  app
+
+app = makeApp (req, res) ->
   res.writeHead(200, {'custom': 'foo'})
   res.end('hello')
+
+slowApp = makeApp (req, res) ->
+  setTimeout ->
+    res.writeHead(200, {'custom', 'foo'})
+    res.end('hello')
+  , 200
+
+brokenApp = makeApp (req, res) ->
+  setTimeout ->
+    res.writeHead(500, {'custom', 'foo'})
+    res.end('b0rked')
+  , 200
 
 beforeEach ->
   cache.clear()
@@ -92,3 +108,68 @@ describe 'cacheMiddleware', ->
         .expect('x-foo', 'bar')
         .expect('foobar')
         .expect 200, done
+
+  describe 'thundering herd', ->
+    it 'handles multiple requests properly', (done) ->
+      request(slowApp)
+        .get('/')
+        .set('X-Reverse-Proxy-TTL', "1")
+        .expect('x-cors-cache', 'miss')
+        .expect('hello')
+        .expect(200)
+
+      request(slowApp)
+        .get('/')
+        .set('X-Reverse-Proxy-TTL', "1")
+        .expect('x-cors-cache', 'wait')
+        .expect('hello')
+        .expect(200)
+        .end ->
+          request(slowApp)
+            .get('/')
+            .set('X-Reverse-Proxy-TTL', "1")
+            .expect('x-cors-cache', 'hit')
+            .expect('hello')
+            .expect(200)
+            .end ->
+              setTimeout ->
+                request(slowApp)
+                  .get('/')
+                  .expect('x-cors-cache', 'miss')
+                  .expect('hello')
+                  .expect(200)
+                  .end(done)
+              , 1200
+
+  describe 'thundering herd w/bad response', ->
+    it 'handles multiple requests gracefully', (done) ->
+      request(brokenApp)
+        .get('/')
+        .set('x-reverse-proxy-ttl', "1")
+        .expect('x-cors-cache', 'miss')
+        .expect('b0rked')
+        .expect(500)
+
+      request(brokenApp)
+        .get('/')
+        .set('x-reverse-proxy-ttl', "1")
+        .expect('x-cors-cache', 'wait')
+        .expect('b0rked')
+        .expect(500)
+        .end ->
+          request(brokenApp)
+            .get('/')
+            .set('x-reverse-proxy-ttl', "1")
+            .expect('x-cors-cache', 'hit')
+            .expect('b0rked')
+            .expect(500)
+            .end ->
+              setTimeout ->
+                request(brokenApp)
+                  .get('/')
+                  .set('x-reverse-proxy-ttl', "1")
+                  .expect('x-cors-cache', 'miss')
+                  .expect('b0rked')
+                  .expect(500)
+                  .end(done)
+              , 300
