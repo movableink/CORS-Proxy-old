@@ -27,5 +27,3 @@ cors-proxy caches backend requests by default for 10 seconds.  To modify this, p
 cors-proxy will indicate that a cached version was used with the `x-cors-cache` header in the response.
 
 The cache is based on the request method (GET, POST, etc), the URL, and any POST data.  The cache cannot be manually expired, so if you need to bust the cache you can change the URL using a random query param.
-
-
