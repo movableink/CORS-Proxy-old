@@ -1,7 +1,13 @@
 httpProxy     = require 'http-proxy'
 parseUrl      = require './parse_url'
+http = require 'http'
+https = require 'https'
 
 HEADERS = ['allow-origin', 'allow-headers', 'allow-credentials', 'allow-methods', 'max-age']
+
+agents =
+  http: new http.Agent()
+  https: new https.Agent()
 
 module.exports = (req, res) ->
   proxyUrl = parseUrl req.url
@@ -29,6 +35,7 @@ module.exports = (req, res) ->
   proxy.web req, res,
     target: proxyUrl.target
     secure: false
+    agent: agents[proxyUrl.proto]
     headers:
       host: proxyUrl.hostname
 
