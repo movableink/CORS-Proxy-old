@@ -28,8 +28,6 @@ server = http.createServer(app)
 server.listen port
 
 console.log "Listening on port #{port}"
-
-
 process.on 'uncaughtException', (err) ->
   server.close()
   console.error "Uncaught exception: #{err.message}", backtrace: err.stack

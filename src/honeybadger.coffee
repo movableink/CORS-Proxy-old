@@ -1,5 +1,5 @@
 Badger = require 'node-honeybadger'
-os = require "os"
+os = require 'os'
 
 hb = new Badger
   apiKey: process.env['HONEYBADGER_API_KEY']
