@@ -33,10 +33,11 @@ class StatsReporter
 
   setup: (callback) ->
     hostname = os.hostname().split('.')[0]
+    dc = process.env.DATACENTER || "main"
 
-    statsd_host = process.env.STATSD_HOST || "localhost"
-    statsd_port = process.env.STATSD_PORT || 8125
-    @_prefix = process.env.STATSD_PREFIX || "cors.#{hostname}"
+    statsd_host = process.env.STATSD_HOST   || "localhost"
+    statsd_port = process.env.STATSD_PORT   || 8125
+    @_prefix    = process.env.STATSD_PREFIX || "cors.#{dc}.#{hostname}"
 
     console.log("Reporting stats to #{statsd_host}:#{statsd_port} with prefix #{@_prefix}")
 
