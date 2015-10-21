@@ -8,6 +8,8 @@ cors          = require './cors'
 rawBody       = require './raw_body'
 proxy         = require './proxy'
 health        = require './health'
+statsReporter = require("./stats_reporter")
+stats         = require './report_stats'
 
 process.title = 'node (CORS proxy)'
 
@@ -16,6 +18,7 @@ cache = new Cache(CACHE_TIME, logging: false)
 
 app = connect()
   .use(requestLogger())
+  .use(stats())
   .use(health)
   .use(cors())
   .use(rawBody())
@@ -24,6 +27,7 @@ app = connect()
   .use(proxy)
 
 port = process.env.PORT || 9292
+statsReporter.setup()
 server = http.createServer(app)
 server.listen port
 
