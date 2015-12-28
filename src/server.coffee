@@ -11,7 +11,7 @@ health        = require './health'
 statsReporter = require("./stats_reporter")
 stats         = require './report_stats'
 
-process.title = 'node (CORS proxy)'
+process.title = 'node (cors proxy)'
 
 CACHE_TIME = 10 * 1000 # 10s
 cache = new Cache(CACHE_TIME, logging: false)
