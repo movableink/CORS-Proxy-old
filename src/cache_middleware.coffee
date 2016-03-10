@@ -10,7 +10,7 @@ responseBody   = require './response_body'
 getRequestBody = require 'raw-body'
 
 module.exports = (cache) ->
-  return (req, res, next) ->
+  return cacheMiddleware = (req, res, next) ->
     origin = req.headers?.origin || '*'
     if req.method is 'POST'
       bodyHash = crypto.createHash('md5').update(req.body or '').digest('hex')
@@ -32,6 +32,11 @@ module.exports = (cache) ->
       res.setHeader 'x-cors-cache', res.cacheStatus
 
       cache.getLater cacheKey, (result) ->
+        # start over if cache key was abandoned
+        if result is null
+          cache.log "retry {#{cacheKey}}"
+          return cacheMiddleware(req, res, next)
+
         result.headers['x-cors-cache'] = res.cacheStatus
         delete result.headers['date']
         res.writeHead result.statusCode, result.headers
@@ -46,7 +51,15 @@ module.exports = (cache) ->
 
       getBody = responseBody.from res
 
+      req.on 'aborted', =>
+        cache.log "abandoned {#{cacheKey}}"
+        cache.abandon cacheKey
+        res.aborted = true
+
       res.on 'finish', =>
+        # client ended early, can't trust this response
+        return if res.aborted
+
         result =
           statusCode: res.statusCode
           headers: res._headers

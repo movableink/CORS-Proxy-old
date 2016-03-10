@@ -38,11 +38,16 @@ class Cache extends EventEmitter
   lock: (key) ->
     @locked[key] = true
 
+  # other requests were waiting on our response, give it to them
   unlock: (key, defaultValue) ->
     value = @get(key) or defaultValue
     delete @locked[key]
 
     @emit key, value
+
+  # other requests were waiting on our response, but we didn't deliver
+  abandon: (key) ->
+    @unlock(key, null)
 
   clear: ->
     @cacheBucket = {}

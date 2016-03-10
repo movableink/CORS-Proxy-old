@@ -1,7 +1,6 @@
 http          = require 'http'
 connect       = require 'connect'
 restreamer    = require 'connect-restreamer'
-honeybadger   = require './honeybadger'
 Cache         = require './cache'
 requestLogger = require './request_logger'
 cors          = require './cors'
@@ -32,11 +31,3 @@ server = http.createServer(app)
 server.listen port
 
 console.log "Listening on port #{port}"
-process.on 'uncaughtException', (err) ->
-  server.close()
-  console.error "Uncaught exception: #{err.message}", backtrace: err.stack
-  honeybadger.send(err)
-
-  honeybadger.once "sent", -> process.exit(1)
-  honeybadger.once "error", -> process.exit(1)
-  honeybadger.once "remoteError", -> process.exit(1)
