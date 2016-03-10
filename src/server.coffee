@@ -1,13 +1,13 @@
 http          = require 'http'
 connect       = require 'connect'
-restreamer    = require 'connect-restreamer'
+bodyParser    = require 'body-parser'
 Cache         = require './cache'
 requestLogger = require './request_logger'
 cors          = require './cors'
 rawBody       = require './raw_body'
 proxy         = require './proxy'
 health        = require './health'
-statsReporter = require("./stats_reporter")
+statsReporter = require './stats_reporter'
 stats         = require './report_stats'
 
 process.title = 'node (cors proxy)'
@@ -20,8 +20,7 @@ app = connect()
   .use(stats())
   .use(health)
   .use(cors())
-  .use(rawBody())
-  .use(restreamer(stringify: (x) -> x)) # rawBody eats the body and http-proxy can't deal
+  .use(bodyParser.raw(type: (req) -> req.method is 'POST'))
   .use(cache.middleware())
   .use(proxy)
 
