@@ -7,4 +7,9 @@ module.exports = ->
       cacheStatus = res.cacheStatus or 'miss'
       console.log "#{new Date().toISOString()} #{res.statusCode} #{req.method} #{req.url} in #{reqTime} ms (cache #{cacheStatus}) #{JSON.stringify(req.headers)}"
 
+    res.on 'close', ->
+      reqTime = (new Date()) - start
+      cacheStatus = res.cacheStatus or 'miss'
+      console.log "#{new Date().toISOString()} #{res.statusCode} #{req.method} #{req.url} in #{reqTime} ms (cache #{cacheStatus} ABORTED) #{JSON.stringify(req.headers)}"
+
     next()
