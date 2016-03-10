@@ -7,7 +7,6 @@
 
 crypto         = require 'crypto'
 responseBody   = require './response_body'
-getRequestBody = require 'raw-body'
 
 module.exports = (cache) ->
   return cacheMiddleware = (req, res, next) ->
