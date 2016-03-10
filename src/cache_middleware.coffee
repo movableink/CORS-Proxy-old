@@ -35,7 +35,7 @@ module.exports = (cache) ->
         # start over if cache key was abandoned
         if result is null
           cache.log "retry {#{cacheKey}}"
-          return process.nextTick -> cacheMiddleware(req, res, next)
+          return cacheMiddleware(req, res, next)
 
         result.headers['x-cors-cache'] = res.cacheStatus
         delete result.headers['date']
