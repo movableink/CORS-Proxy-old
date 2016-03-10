@@ -25,6 +25,7 @@ module.exports = (req, res) ->
   proxy.web req, res,
     target: proxyUrl.target
     secure: false
+    proxyTimeout: 30000
     headers:
       host: proxyUrl.hostname
 
