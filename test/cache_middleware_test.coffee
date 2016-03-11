@@ -1,15 +1,13 @@
 connect    = require 'connect'
-restreamer = require 'connect-restreamer'
 request    = require 'supertest'
 Cache      = require '../src/cache'
-rawBody    = require '../src/raw_body'
+bodyParser    = require 'body-parser'
 
 cache = new Cache(10000, logging: false)
 
 makeApp = (cb) ->
   app = connect()
-  app.use rawBody()
-  app.use restreamer()
+  app.use(bodyParser.raw(type: (req) -> req.method is 'POST'))
   app.use cache.middleware()
   app.use cb
   app

@@ -29,8 +29,10 @@ module.exports = (req, res) ->
     headers:
       host: proxyUrl.hostname
 
-  proxy.on 'proxyReq', (proxyReq) ->
+  proxy.on 'proxyReq', (proxyReq, req) ->
     proxyReq.path = proxyUrl.path
+    proxyReq.write(req.body) if (req.method=="POST" && req.body)
+
 
   proxy.on 'proxyRes', (proxyRes) ->
     delete proxyRes?.headers?["access-control-#{name}"] for name in HEADERS
