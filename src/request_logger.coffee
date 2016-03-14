@@ -5,11 +5,27 @@ module.exports = ->
     res.on 'finish', ->
       reqTime = (new Date()) - start
       cacheStatus = res.cacheStatus or 'miss'
-      console.log "#{new Date().toISOString()} #{res.statusCode} #{req.method} #{req.url} in #{reqTime} ms (cache #{cacheStatus}) #{JSON.stringify(req.headers)}"
+      console.log JSON.stringify(
+        date: new Date().toISOString()
+        statusCode: res.statusCode
+        method: req.method
+        url: req.url
+        time: reqTime
+        cacheStatus: cacheStatus
+        headers: req.headers
+      )
 
     res.on 'close', ->
       reqTime = (new Date()) - start
       cacheStatus = res.cacheStatus or 'miss'
-      console.log "#{new Date().toISOString()} #{res.statusCode} #{req.method} #{req.url} in #{reqTime} ms (cache #{cacheStatus} ABORTED) #{JSON.stringify(req.headers)}"
+      console.log JSON.stringify(
+        date: new Date().toISOString()
+        statusCode: res.statusCode
+        method: req.method
+        url: req.url
+        time: reqTime
+        cacheStatus: cacheStatus
+        headers: req.headers
+      )
 
     next()
