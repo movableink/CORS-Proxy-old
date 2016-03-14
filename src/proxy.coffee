@@ -7,7 +7,10 @@ module.exports = (req, res) ->
   proxyUrl = parseUrl req.url
 
   unless proxyUrl.hostname
-    console.log "no hostname specified"
+    console.log JSON.stringify(
+      proxyError: "bad request"
+      detail:     "no hostname specified"
+    )
     res.writeHead(400, {})
     res.end("Bad request. (no hostname specified)");
     return
@@ -17,7 +20,10 @@ module.exports = (req, res) ->
 
   proxy = httpProxy.createProxyServer()
   proxy.on 'error', (err, req, res) ->
-    console.error err
+    console.error JSON.stringify(
+      proxyError: "error event"
+      detail:     err
+    )
     if !res.headersSent
       res.writeHead(500, {})
       res.end 'Request failed.'

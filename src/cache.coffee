@@ -57,7 +57,9 @@ class Cache extends EventEmitter
     Object.keys(@cacheBucket)
 
   log: (message) ->
-    console.log "[CACHE] #{message}" unless @options.logging is false
+    console.log JSON.stringify(
+      CACHE: message
+    ) unless @options.logging is false
 
   debugLog: ->
     try

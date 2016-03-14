@@ -19,7 +19,10 @@ class StatsReporter
     @_stats[key] = value
 
   errorHandler: (err) ->
-    console.error('error reporting to statsd:', err)
+    console.error JSON.stringify(
+      statsReporting: false
+      error: err
+    )
 
   send: ->
     return unless @_client
@@ -39,7 +42,12 @@ class StatsReporter
     statsd_port = process.env.STATSD_PORT   || 8125
     @_prefix    = process.env.STATSD_PREFIX || "cors.#{dc}.#{hostname}"
 
-    console.log("Reporting stats to #{statsd_host}:#{statsd_port} with prefix #{@_prefix}")
+    console.log JSON.stringify(
+      statsReporting: true
+      host: statsd_host
+      port: statsd_port
+      prefix: @_prefix
+    )
 
     dns.lookup statsd_host, (err, ip) =>
       unless err
