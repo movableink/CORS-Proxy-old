@@ -14,6 +14,7 @@ module.exports = (req, res) ->
 
   delete req.headers?['x-forwarded-proto']
   delete req.headers?['x-forwarded-for']
+  delete req.headers?['x-mi-cbe']
 
   proxy = httpProxy.createProxyServer()
   proxy.on 'error', (err, req, res) ->
