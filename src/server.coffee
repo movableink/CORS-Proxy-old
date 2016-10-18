@@ -29,6 +29,7 @@ server = http.createServer(app)
 server.listen port
 
 console.log JSON.stringify(
+  date: new Date().toISOString()
   listening: true
   port: port
 )

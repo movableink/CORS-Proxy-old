@@ -8,6 +8,7 @@ module.exports = (req, res) ->
 
   unless proxyUrl.hostname
     console.log JSON.stringify(
+      date: new Date().toISOString()
       proxyError: "bad request"
       detail:     "no hostname specified"
     )
@@ -22,6 +23,7 @@ module.exports = (req, res) ->
   proxy = httpProxy.createProxyServer()
   proxy.on 'error', (err, req, res) ->
     console.error JSON.stringify(
+      date: new Date().toISOString()
       proxyError: "error event"
       detail:     err
     )

@@ -58,6 +58,7 @@ class Cache extends EventEmitter
 
   log: (message) ->
     console.log JSON.stringify(
+      date: new Date().toISOString()
       CACHE: message
     ) unless @options.logging is false
 

@@ -20,6 +20,7 @@ class StatsReporter
 
   errorHandler: (err) ->
     console.error JSON.stringify(
+      date: new Date().toISOString()
       statsReporting: false
       error: err
     )
@@ -43,6 +44,7 @@ class StatsReporter
     @_prefix    = process.env.STATSD_PREFIX || "cors.#{dc}.#{hostname}"
 
     console.log JSON.stringify(
+      date: new Date().toISOString()
       statsReporting: true
       host: statsd_host
       port: statsd_port
