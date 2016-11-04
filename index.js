@@ -8,6 +8,7 @@ const proxy         = require('./lib/proxy');
 const health        = require('./lib/health');
 const statsReporter = require('./lib/stats-reporter');
 const stats         = require('./lib/report-stat');
+const log           = require('./lib/log');
 
 process.title = 'node (cors proxy)';
 
@@ -26,6 +27,7 @@ let app = connect()
 const port = process.env.PORT || 9292;
 statsReporter.setup();
 let server = http.createServer(app);
-server.listen(port);
 
-console.log(`Listening on port ${port}`);
+server.listen(port, () => {
+  log({ listening: true, port: port });
+});
