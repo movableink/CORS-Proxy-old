@@ -3,7 +3,7 @@
   "dependencies": {
     "connect"            : "2.30.2",
     "eventemitter3"      : "0.1.6",
-    "http-proxy"         : "1.13.2",
+    "http-proxy"         : "1.15.2",
     "lynx"               : "0.2.0",
     "body-parser"        : "1.15.0"
   },
