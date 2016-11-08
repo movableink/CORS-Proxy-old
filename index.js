@@ -1,3 +1,5 @@
+'use strict';
+
 const http          = require('http');
 const connect       = require('connect');
 const bodyParser    = require('body-parser');
