@@ -17,7 +17,7 @@ process.title = 'node (cors proxy)';
 const CACHE_TIME = 10 * 1000; // 10s
 let cache = new Cache(CACHE_TIME, {logging: false});
 
-let app = connect()
+const app = connect()
   .use(requestLogger())
   .use(stats())
   .use(health)
@@ -28,7 +28,7 @@ let app = connect()
 
 const port = process.env.PORT || 9292;
 statsReporter.setup();
-let server = http.createServer(app);
+const server = http.createServer(app);
 
 server.listen(port, () => {
   log({ listening: true, port: port });
