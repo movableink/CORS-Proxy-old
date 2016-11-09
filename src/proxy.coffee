@@ -20,6 +20,8 @@ module.exports = (req, res) ->
   delete req.headers?['x-forwarded-for']
   delete req.headers?['x-mi-cbe']
 
+  req.headers['connection'] = 'keep-alive'
+
   proxy = httpProxy.createProxyServer()
   proxy.on 'error', (err, req, res) ->
     console.error JSON.stringify(
