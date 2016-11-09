@@ -27,3 +27,4 @@ module.exports = (requestUrl) ->
     hostname: target.hostname
     path: target.path
     target: target.format()
+    isHttps: (proto == 'https')

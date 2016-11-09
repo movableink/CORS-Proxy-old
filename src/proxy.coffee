@@ -1,7 +1,19 @@
+http          = require 'http'
+https         = require 'https'
 httpProxy     = require 'http-proxy'
 parseUrl      = require './parse_url'
 
 HEADERS = ['allow-origin', 'allow-headers', 'allow-credentials', 'allow-methods', 'max-age']
+
+agentOptions =
+  maxSockets: 62000
+  keepAlive: true
+  maxFreeSockets: 1000
+  keepAliveMsecs: 100
+  timeout: 15000
+
+httpAgent = new http.Agent(agentOptions)
+httpsAgent = new https.Agent(agentOptions)
 
 module.exports = (req, res) ->
   proxyUrl = parseUrl req.url
@@ -22,7 +34,9 @@ module.exports = (req, res) ->
 
   req.headers['connection'] = 'keep-alive'
 
-  proxy = httpProxy.createProxyServer()
+  agent = if proxyUrl.isHttps then httpsAgent else httpAgent;
+
+  proxy = httpProxy.createProxyServer(agent: agent)
   proxy.on 'error', (err, req, res) ->
     console.error JSON.stringify(
       date: new Date().toISOString()
