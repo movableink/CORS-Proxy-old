@@ -3,10 +3,12 @@ module.exports = ->
     start = new Date()
 
     res.on 'finish', ->
-      reqTime = (new Date()) - start
+      finish = new Date()
+      reqTime = finish - start
       cacheStatus = res.cacheStatus or 'miss'
+
       console.log JSON.stringify(
-        date: new Date().toISOString()
+        date: finish.toISOString()
         statusCode: res.statusCode
         method: req.method
         url: req.url
@@ -16,10 +18,12 @@ module.exports = ->
       )
 
     res.on 'close', ->
-      reqTime = (new Date()) - start
+      finish = new Date()
+      reqTime = finish - start
       cacheStatus = res.cacheStatus or 'miss'
+
       console.log JSON.stringify(
-        date: new Date().toISOString()
+        date: finish.toISOString()
         statusCode: res.statusCode
         method: req.method
         url: req.url
