@@ -1,25 +1,23 @@
 {
   "name": "corsproxy",
   "dependencies": {
-    "coffee-script"      : "1.3.3",
     "connect"            : "2.30.2",
     "eventemitter3"      : "0.1.6",
-    "http-proxy"         : "1.13.2",
+    "http-proxy"         : "1.15.2",
     "lynx"               : "0.2.0",
     "body-parser"        : "1.15.0"
   },
   "scripts": {
-    "start": "./node_modules/.bin/coffee src/server.coffee",
-    "test": "./node_modules/.bin/mocha --compilers coffee:coffee-script --require coffee-script --reporter dot --require test/test_helper.coffee --colors"
+    "start": "node index.js",
+    "test": "./node_modules/.bin/mocha --reporter dot --colors"
   },
   "devDependencies": {
-    "mocha":     "1.18.2",
-    "should":    "3.3.1",
+    "mocha":     "3.0.2",
+    "should":    "11.1.0",
     "supertest": "0.11.0"
   },
   "engines": {
-    "node": "4.2.4",
-    "npm": "2.14.x"
+    "node": "6.6.0"
   },
   "version": "0.0.1"
 }
