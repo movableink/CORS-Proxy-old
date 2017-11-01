@@ -1,0 +1,11 @@
+FROM node:8
+
+RUN npm install -g corsproxy
+
+EXPOSE 9292
+
+ENV CORSPROXY_HOST 0.0.0.0
+
+ENV CORSPROXY_PORT 9292
+
+ENTRYPOINT ["corsproxy"]
