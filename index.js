@@ -4,7 +4,6 @@ const http           = require('http');
 const connect        = require('connect');
 const bodyParser     = require('body-parser');
 const Cache          = require('./lib/cache');
-const headerValidity = require('./lib/header-validity');
 const requestLogger  = require('./lib/request-logger');
 const cors           = require('./lib/cors');
 const proxy          = require('./lib/proxy');
@@ -19,7 +18,6 @@ const CACHE_TIME = 10 * 1000; // 10s
 let cache = new Cache(CACHE_TIME, {logging: false});
 
 const app = connect()
-  .use(headerValidity.checkHeaderValidity)
   .use(requestLogger())
   .use(stats())
   .use(health)
