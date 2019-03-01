@@ -4,3 +4,7 @@ node_js:
   - "8.4.0"
 
 sudo: false
+
+after_success:
+- test $TRAVIS_BRANCH = master && pip install --user awscli
+- test $TRAVIS_BRANCH = master && aws codebuild start-build --project-name=deploy-controller --region=us-west-2 --environment-variables-override=name=GIT_SHA,value=$TRAVIS_COMMIT,name=MI_REPO,value=cors-proxy
